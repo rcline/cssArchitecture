@@ -1,0 +1,48 @@
+SMACSS - Scalable and Modular Architecture for CSS
+
+CSS is the language of modern user interfaces.  It is used on small to large to mammoth sized applications.  The language’s lack of structure can make maintaining and adding new features a nightmare...if WE do not put structure in place.  We need architecture for CSS and SMACSS is one great approach.  SMACSS is not a one size fits all solution and needs to be tailored to the team/project.  What you will read here is my flavor of a SMACSS approach.
+
+SMACSS has two main goals: to increase semantic value of a section of HTML or content and to decrease the expectation of a specific HTML structure.
+
+The SMACSS approach separates out the categories of an app’s CSS into 5 different areas: the Base, Layout, Theme, Modules (the parts of your app), and States (Way to modify Layout/Theme/Modules to look different after some user action).  With each of these different categories I will talk about several items.  What is the purpose of this category.  What selectors should be used when applying styles.  Which css properties are associated with the category.  What naming conventions to use to differentiate among them.
+
+The Base Rules start your app off on a good foundation.  It smooths out browser inconsistencies with element reset styles.  Everything else should be in layout/module/theme files.  The selectors used in Base styles are <element>, descendant (“ “) or child (“>”), and pseudo classes (“:”).  Also, if you have common global styles they can go here (ex: a clear both class).  Use classes selectors for these styles.
+
+The Layout Rules form the structure, the bones of our app.  They are the major components/containers of the page such as header, left nav, content.  “Layouts hold one or more modules together.”  The selectors used in Layout styles are #ids*, .classes, and semantic <elements>.  These classes should be prefixed with a “l-” to easily identify that these are Layout styles.  Some of the CSS properties most likely used in these styles are width, height, margin, padding, border, float.
+
+The Theme Rules are the look, the skin of our app.  These styles usually correspond to company colors/logos or different skins for user preferences.  Different themes can be loaded to change the look of the app.  The selectors used in Theme styles are <element>, .classes, and pseudo classes (“:”).  These classes should be prefixed with “t-”.  Some of the CSS properties most likely used in these styles are colors, fonts, background color/images, border colors/style.
+
+The Module Rules are the minor components.  They will be the bulk of the app’s CSS.  These are stand alone components.  One module should not rely on another for styling.  We can use subclassing for different versions of the same module.  The selectors used in Module styles are .classes, direct child <element> (“>”), and descendant <element>*.  These classes should be prefixed with module name + “-”.
+
+The State Rules define how a specific piece of a layout, theme, or module should look when a certain state occurs.  These states are usually driven by user action or things like viewport size.  The state class is applied to either the same element that it is changing or to the base of the module/page it is changing.  State CSS should reside in the same file as the style it is changing.  State classes should not, on their own, have CSS properties applied to them. The CSS should be applied to a combination of the state selector and the selector it is changing.  The selectors used in State rules are .classes, pseudo classes (“:”), and media queries.  These classes should be prefixed with “s-” or “is-”.  It is permissible to use an !important with state selectors if necessary.
+
+I want to touch on why the naming convention is important.  How about a scenario: You have a good looking UI but there is one piece that is out of place.  Say it needs to be moved to the left 5px.  You see that there is a div containing this element and moving it left 5px solves your problem, oh hey it also has a class on it, l-right-description, how convenient!  Done!  But that was a layout style.  Other modules might have to fit in the same place, and they might not do as well without those 5px.  These categories will make you think more about that the style is supposed to accomplish.  Did I need to move the frame of the layout, or was the problem only this module and I should not be affecting other modules?  The naming convention is important since it tell us what the purpose of the styles being added are for.  The help us ask questions about our implementation early so we don’t regret it later.
+
+The other piece to structure is file naming convention and file directory layout.  These two become increasingly more important if an application is doing just-in-time CSS loading.  I will not go into depth here.  There are lots of possibilities with different 3rd party libraries available.  Separating these categories out has allowed us to combine all the files that we need a certain moment.  On page load the app gets all the base styles, adds in the specific layout and theme styles, and then finds all the styles for the modules it is displaying.  When a module is added, all we need is that module’s styles.
+
+The biggest reason we need rules in place for CSS is to account for the quirks of CSS and how the browser renders CSS.
+
+Most programing languages have some sort of scope.  CSS does NOT; everything is global.  In JavaScript we account for this by either creating scope with closures/functions or we namespace and nest our variables on to one globally scoped variable.  We can not do the former in CSS so we must do a version of the later.  Just so we are clear, no scope in CSS means every style added to any app/widget/module that can be loaded has the ability to affect any existing elements on the page! (iframes aside).  Prefixing our categories is a good start, but it is not enough.  We must namespace our CSS selectors to ensure they are only affecting what they should be.  Namespacing is most common for modules but can also be used in layouts/themes/states selectors.
+
+Multi-class namespacing:
+Lets look at an example.  One module (lets say a content module) has a namespaced header class (.content .header).  Now a right side module is loaded that is not namespaced.  It has a header class as well (.header) and for some reason this header is floated right.  Since the content header does not have a float CSS property defined it will pick up the float right and break the content’s UI.  Namespacing the header class with a side class will prevent the class from bleeding onto other modules (.side .header).  
+
+Single-class namespacing:
+Making sure every module that is added to the app is namespaced is good, but we must do better.  We need to make sure the content module is isolated as much as possible.  How do we do this?  We must switch from multiple class hierarchy to single class hierarchy.  Instead of the content module’s header class being .header it should be .content-header.  Now if there is a rogue module that is loaded into the app with .header, it will not affect the header of the content module.  Single class selectors also help put specificity on the element level which is one of the goals of SMACSS.
+
+Obviously there needs to be a balance.  We should not be putting classes on every single element we want to style.  However we should be taking into account how the browser finds the elements of a selector.  Browsers read CSS selectors from right to left.  This means the browser will first look at the rightmost part of a selector, often called the key selector.  Say we have this selector:  .module .content .description .list li.  The li would be the key selector. The browser will first find all the li elements.  Then it will test those elements and see which have an ancestor of .list, etc. It would be much better to change that selector to this (putting the class on the ul element): .module-content-description-list > li.  SMACSS calls this Depth of Applicability, “Shallow is good to a point.“  Your selectors should be made to “Shoot to kill”.
+
+Another win of single-class namespacing is Specificity.  Since all your selectors will be on the same specificity level (or close to) it will be a lot easier to make a style more specific, by say adding a state class, to change a css property.
+
+The 6th sense...I mean category:
+JavaScript Hooks are selectors used by JavaScript to gain access into the DOM.  Reasons to use them are to find a container to place a compiled template into, to read a property or value from an input or data-attribute, to add/remove classes or change state, etc.  These selectors only purpose is to give JavaScript quick access to the DOM.  There should be no styles associated with these selectors, otherwise we will not be separating concerns.  Say if the selector for styling the background color of a div is no longer needed, one can not simply remove that style since it is used by JavaScript.  A lot of the times frameworks like Backbone will set up most of the hooking.  We still need to make sure the selectors we pass these frameworks are good, style free, selectors.  The selectors used in hooks should be #ids or .classes.  JavaScript Hooks should be prefixed with “h-” or useCamleCaseName that correspond to the JavaScript variable being used.
+
+
+
+Icon Module:
+<span class=”icon icon-large icon-unentitled”></span>
+
+
+Credit:
+All quotes are references to Jonathan Snook’s SMACSS: smacss.com
+Also referenced but not directly quoted is Harry Roberts’ article Shoot to Kill: http://csswizardry.com/2012/07/shoot-to-kill-css-selector-intent/
